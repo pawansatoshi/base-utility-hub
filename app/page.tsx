@@ -19,20 +19,21 @@ export default function Home() {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loadingNews, setLoadingNews] = useState(true);
 
-  // 🔥 FETCH PRICES (every 2 sec)
+  // 🔥 FETCH PRICES
   const fetchPrices = async () => {
     try {
       const res = await fetch(
-        "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=20&page=1&sparkline=false"
+        "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=20&page=1&sparkline=false",
+        { cache: "no-store" }
       );
       const data = await res.json();
       setCoins(data);
     } catch (e) {
-      console.log("Price error", e);
+      console.log("price error", e);
     }
   };
 
-  // 📰 FETCH NEWS (fallback safe)
+  // 📰 FETCH NEWS
   const fetchNews = async () => {
     try {
       const res = await fetch(
@@ -48,7 +49,8 @@ export default function Home() {
 
       setNews(formatted);
     } catch (e) {
-      console.log("News fallback used");
+      console.log("news fallback");
+
       setNews([
         {
           title: "Crypto market showing strong recovery momentum",
@@ -82,9 +84,24 @@ export default function Home() {
 
       {/* TABS */}
       <div style={styles.tabs}>
-        <button onClick={() => setTab("prices")} style={tab === "prices" ? styles.activeTab : styles.tab}>Prices</button>
-        <button onClick={() => setTab("gas")} style={tab === "gas" ? styles.activeTab : styles.tab}>Gas</button>
-        <button onClick={() => setTab("news")} style={tab === "news" ? styles.activeTab : styles.tab}>News</button>
+        <button
+          onClick={() => setTab("prices")}
+          style={tab === "prices" ? styles.activeTab : styles.tab}
+        >
+          Prices
+        </button>
+        <button
+          onClick={() => setTab("gas")}
+          style={tab === "gas" ? styles.activeTab : styles.tab}
+        >
+          Gas
+        </button>
+        <button
+          onClick={() => setTab("news")}
+          style={tab === "news" ? styles.activeTab : styles.tab}
+        >
+          News
+        </button>
       </div>
 
       {/* PRICES */}
