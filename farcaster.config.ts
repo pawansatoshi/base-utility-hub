@@ -14,33 +14,36 @@ export const farcasterConfig = {
   miniapp: {
     version: "1",
 
-    // ✅ YOUR APP NAME
+    // ✅ APP NAME
     name: "Base Utility Hub",
 
-    // ✅ SHORT TAGLINE (shown in preview)
+    // ✅ TAGLINE
     subtitle: "Gas, Prices & Crypto News",
 
-    // ✅ DESCRIPTION (important for credibility)
+    // ✅ DESCRIPTION
     description:
       "All-in-one Base utility app for gas estimation, crypto prices, and latest crypto news.",
 
-    // ✅ ICON (your uploaded logo)
+    // ✅ ICON
     iconUrl: `${ROOT_URL}/base-logo.png`,
 
-    // ✅ MAIN APP LINK
+    // ✅ FIX (VERY IMPORTANT — THIS WAS MISSING)
+    heroImageUrl: `${ROOT_URL}/base-logo.png`,
+
+    // ✅ MAIN URL
     homeUrl: ROOT_URL,
 
-    // (optional but safe to keep)
+    // optional but safe
     webhookUrl: `${ROOT_URL}/api/webhook`,
 
     primaryCategory: "finance",
 
     tags: ["base", "crypto", "gas", "prices", "news"],
 
-    // Optional preview fields
     tagline: "Track gas, crypto prices & news in one place",
 
     ogTitle: "Base Utility Hub ⚡",
+
     ogDescription:
       "Check gas fees, track top crypto prices and stay updated with latest crypto news on Base.",
 
