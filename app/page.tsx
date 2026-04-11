@@ -9,8 +9,9 @@ export default function Home() {
   const [result, setResult] = useState("");
   const [ethPrice, setEthPrice] = useState(0);
 
-  const [coins, setCoins] = useState<any[]>([]);
-  const [news, setNews] = useState<any[]>([]);
+  // ✅ FIXED (no any)
+  const [coins, setCoins] = useState([]);
+  const [news, setNews] = useState([]);
 
   // ETH PRICE
   useEffect(() => {
@@ -64,7 +65,7 @@ export default function Home() {
         gap: 10,
         marginBottom: 20
       }}>
-        <img src="/base-logo.png" width="40" />
+        <img src="/base-logo.png" width="40" alt="base logo" />
         <h1 style={{ fontSize: "18px", margin: 0 }}>
           Base Utility Hub ⚡
         </h1>
@@ -77,10 +78,10 @@ export default function Home() {
         <button onClick={() => setTab("news")} style={tabBtn}>News</button>
       </div>
 
-      {/* CONTENT CARD */}
+      {/* CARD */}
       <div style={card}>
 
-        {/* GAS TAB */}
+        {/* GAS */}
         {tab === "gas" && (
           <>
             <h2>Gas Fee Estimator</h2>
@@ -114,11 +115,11 @@ export default function Home() {
           </>
         )}
 
-        {/* PRICES TAB */}
+        {/* PRICES */}
         {tab === "prices" && (
           <>
             <h2>Top 50 Crypto Prices</h2>
-            {coins.map((c) => (
+            {coins.map((c: any) => (
               <div key={c.id} style={listItem}>
                 {c.name} — ₹{c.current_price}
               </div>
@@ -126,11 +127,11 @@ export default function Home() {
           </>
         )}
 
-        {/* NEWS TAB */}
+        {/* NEWS */}
         {tab === "news" && (
           <>
             <h2>Crypto News</h2>
-            {news.map((n, i) => (
+            {news.map((n: any, i) => (
               <div key={i} style={listItem}>
                 <a href={n.url} target="_blank" style={{ color: "#38bdf8" }}>
                   {n.title}
