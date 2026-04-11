@@ -1,127 +1,96 @@
 "use client";
 import { useState, useEffect } from "react";
-import sdk from "@farcaster/miniapp-sdk";
-import { useMiniApp } from "./providers/MiniAppProvider";
-import { useRouter } from "next/navigation";
-import { farcasterConfig } from "../farcaster.config";
-import styles from "./page.module.css";
-
-interface AuthResponse {
-  success: boolean;
-  user?: {
-    fid: number; // FID is the unique identifier for the user
-    issuedAt?: number;
-    expiresAt?: number;
-  };
-  message?: string; // Error messages come as 'message' not 'error'
-}
-
 
 export default function Home() {
-  const { context, isReady } = useMiniApp();
-  const [email, setEmail] = useState("");
-  const [error, setError] = useState("");
-  const router = useRouter();
- 
-  
+  const [tab, setTab] = useState("gas");
 
-  // If you need to verify the user's identity, you can use the SDK's quickAuth.
-  // This will verify the user's signature and return the user's FID. You can update
-  // this to meet your needs. See the /app/api/auth/route.ts file for more details.
-  // Note: If you don't need to verify the user's identity, you can get their FID and other user data
-  // via `context.user.fid`.
-  const [authData, setAuthData] = useState<AuthResponse | null>(null);
-  const [isAuthLoading, setIsAuthLoading] = useState(true);
-  const [authError, setAuthError] = useState<Error | null>(null);
+  const [gasPrice, setGasPrice] = useState("");
+  const [gasLimit, setGasLimit] = useState("");
+  const [result, setResult] = useState("");
+  const [ethPrice, setEthPrice] = useState(0);
+
+  const [coins, setCoins] = useState([]);
+  const [news, setNews] = useState([]);
 
   useEffect(() => {
-    const authenticate = async () => {
-      try {
-        const response = await sdk.quickAuth.fetch('/api/auth');
-        const data = await response.json();
-        setAuthData(data);
-      } catch (err) {
-        setAuthError(err as Error);
-      } finally {
-        setIsAuthLoading(false);
-      }
-    };
+    fetch("https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=inr")
+      .then(res => res.json())
+      .then(data => setEthPrice(data.ethereum.inr));
+  }, []);
 
-    if (isReady) {
-      authenticate();
-    }
-  }, [isReady]);
+  useEffect(() => {
+    fetch("https://api.coingecko.com/api/v3/coins/markets?vs_currency=inr&per_page=50")
+      .then(res => res.json())
+      .then(data => setCoins(data));
+  }, []);
 
-  const validateEmail = (email: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
+  useEffect(() => {
+    fetch("https://cryptopanic.com/api/v1/posts/?auth_token=demo&public=true")
+      .then(res => res.json())
+      .then(data => setNews(data.results));
+  }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
+  const calculateFee = (price?: number) => {
+    const p = price || parseFloat(gasPrice);
+    const l = parseFloat(gasLimit);
 
-    // Check authentication first
-    if (isAuthLoading) {
-      setError("Please wait while we verify your identity...");
+    if (!p || !l) {
+      setResult("Enter valid values");
       return;
     }
 
-    if (authError || !authData?.success) {
-      setError("Please authenticate to join the waitlist");
-      return;
-    }
+    const feeETH = (p * l) / 1e9;
+    const feeINR = feeETH * ethPrice;
 
-    if (!email) {
-      setError("Please enter your email address");
-      return;
-    }
-
-    if (!validateEmail(email)) {
-      setError("Please enter a valid email address");
-      return;
-    }
-
-    // TODO: Save email to database/API with user FID
-    console.log("Valid email submitted:", email);
-    console.log("User authenticated:", authData.user);
-    
-    // Navigate to success page
-    router.push("/success");
+    setResult(`Fee: ${feeETH.toFixed(6)} ETH (~₹${feeINR.toFixed(2)})`);
   };
 
   return (
-    <div className={styles.container}>
-      <button className={styles.closeButton} type="button">
-        ✕
-      </button>
+    <div style={{ padding: 20, background: "#0f172a", color: "white", minHeight: "100vh" }}>
       
-      <div className={styles.content}>
-        <div className={styles.waitlistForm}>
-          <h1 className={styles.title}>Join {farcasterConfig.miniapp.name.toUpperCase()}</h1>
-          
-          <p className={styles.subtitle}>
-             Hey {context?.user?.displayName || "there"}, Get early access and be the first to experience the future of<br />
-            crypto marketing strategy.
-          </p>
+      <h1>Base Utility Hub ⚡</h1>
+      <img src="/base-logo.png" width="50" />
 
-          <form onSubmit={handleSubmit} className={styles.form}>
-            <input
-              type="email"
-              placeholder="Your amazing email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className={styles.emailInput}
-            />
-            
-            {error && <p className={styles.error}>{error}</p>}
-            
-            <button type="submit" className={styles.joinButton}>
-              JOIN WAITLIST
-            </button>
-          </form>
-        </div>
+      <div style={{ marginBottom: 20 }}>
+        <button onClick={() => setTab("gas")}>Gas</button>
+        <button onClick={() => setTab("prices")}>Prices</button>
+        <button onClick={() => setTab("news")}>News</button>
       </div>
+
+      {tab === "gas" && (
+        <div>
+          <input placeholder="Gas Price" onChange={(e)=>setGasPrice(e.target.value)} />
+          <input placeholder="Gas Limit" onChange={(e)=>setGasLimit(e.target.value)} />
+          <button onClick={()=>calculateFee()}>Calculate</button>
+
+          <div>
+            <button onClick={()=>calculateFee(10)}>Low</button>
+            <button onClick={()=>calculateFee(20)}>Medium</button>
+            <button onClick={()=>calculateFee(30)}>High</button>
+          </div>
+
+          <p>{result}</p>
+          <p>ETH Price: ₹{ethPrice}</p>
+        </div>
+      )}
+
+      {tab === "prices" && (
+        <div>
+          {coins.map((c:any)=>(
+            <div key={c.id}>{c.name} - ₹{c.current_price}</div>
+          ))}
+        </div>
+      )}
+
+      {tab === "news" && (
+        <div>
+          {news.map((n:any,i)=>(
+            <div key={i}>
+              <a href={n.url} target="_blank">{n.title}</a>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
-}
+                 }
