@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Source_Code_Pro } from "next/font/google";
 import { SafeArea } from "./components/SafeArea";
-import { farcasterConfig } from "../farcaster.config";
 import { Providers } from "./providers";
 import "./globals.css";
 
@@ -15,7 +14,7 @@ export async function generateMetadata(): Promise<Metadata> {
         version: "1",
         imageUrl: "https://base-utility-hub.vercel.app/image.png",
         button: {
-          title: "Open Base Utility",
+          title: "Open Base Utility Hub",
           action: {
             type: "launch_frame",
             name: "Launch App"
@@ -38,19 +37,16 @@ const sourceCodePro = Source_Code_Pro({
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <Providers>
       <html lang="en">
-        <head>
-        <meta name="base:app_id" content="69da2ff92c63bda0567315e3" />
-        </head>
         <body className={`${inter.variable} ${sourceCodePro.variable}`}>
           <SafeArea>{children}</SafeArea>
         </body>
       </html>
     </Providers>
   );
-}
+          }
