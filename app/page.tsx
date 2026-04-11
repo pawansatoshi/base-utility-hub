@@ -1,5 +1,7 @@
 "use client";
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { useState, useEffect } from "react";
 import Image from "next/image";
 
@@ -38,29 +40,43 @@ export default function Home() {
   const [coins, setCoins] = useState<Coin[]>([]);
   const [news, setNews] = useState<NewsItem[]>([]);
 
-  /* ---------------- ETH PRICE (USD) ---------------- */
+  /* ---------------- ETH PRICE AUTO REFRESH ---------------- */
 
   useEffect(() => {
-    fetch(
-      "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd"
-    )
-      .then((res) => res.json())
-      .then((data) => setEthPrice(data.ethereum.usd))
-      .catch(() => setEthPrice(0));
+    const fetchETH = () => {
+      fetch(
+        "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd"
+      )
+        .then((res) => res.json())
+        .then((data) => setEthPrice(data.ethereum.usd))
+        .catch(() => setEthPrice(0));
+    };
+
+    fetchETH();
+    const interval = setInterval(fetchETH, 30000);
+
+    return () => clearInterval(interval);
   }, []);
 
-  /* ---------------- TOP COINS ---------------- */
+  /* ---------------- COINS AUTO REFRESH ---------------- */
 
   useEffect(() => {
-    fetch(
-      "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=20&page=1"
-    )
-      .then((res) => res.json())
-      .then((data: Coin[]) => setCoins(data))
-      .catch(() => setCoins([]));
+    const fetchCoins = () => {
+      fetch(
+        "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=20&page=1"
+      )
+        .then((res) => res.json())
+        .then((data: Coin[]) => setCoins(data))
+        .catch(() => setCoins([]));
+    };
+
+    fetchCoins();
+    const interval = setInterval(fetchCoins, 30000);
+
+    return () => clearInterval(interval);
   }, []);
 
-  /* ---------------- NEWS (FIXED API) ---------------- */
+  /* ---------------- NEWS FIXED ---------------- */
 
   useEffect(() => {
     fetch(
@@ -74,6 +90,7 @@ export default function Home() {
             url: n.url,
             source: n.source?.title || "Unknown",
           }));
+
           setNews(formatted);
         }
       })
@@ -116,7 +133,6 @@ export default function Home() {
           alt="Base Logo"
           width={32}
           height={32}
-          style={{ borderRadius: 6 }}
         />
         <h2 style={{ margin: 0 }}>Base Utility Hub ⚡</h2>
       </div>
@@ -126,7 +142,7 @@ export default function Home() {
         {["gas", "prices", "news"].map((t) => (
           <button
             key={t}
-            onClick={() => setTab(t as any)}
+            onClick={() => setTab(t as "gas" | "prices" | "news")}
             style={{
               padding: "8px 14px",
               borderRadius: 8,
@@ -143,14 +159,7 @@ export default function Home() {
 
       {/* ---------------- GAS ---------------- */}
       {tab === "gas" && (
-        <div
-          style={{
-            marginTop: 20,
-            padding: 16,
-            background: "#1e293b",
-            borderRadius: 12,
-          }}
-        >
+        <div style={cardStyle}>
           <h3>Gas Fee Estimator</h3>
 
           <input
@@ -178,26 +187,11 @@ export default function Home() {
 
       {/* ---------------- PRICES ---------------- */}
       {tab === "prices" && (
-        <div
-          style={{
-            marginTop: 20,
-            padding: 16,
-            background: "#1e293b",
-            borderRadius: 12,
-          }}
-        >
+        <div style={cardStyle}>
           <h3>Top Crypto Prices</h3>
 
           {coins.map((c) => (
-            <div
-              key={c.id}
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                padding: "8px 0",
-                borderBottom: "1px solid #334155",
-              }}
-            >
+            <div key={c.id} style={rowStyle}>
               <span>{c.name}</span>
               <span>${c.current_price}</span>
             </div>
@@ -207,14 +201,7 @@ export default function Home() {
 
       {/* ---------------- NEWS ---------------- */}
       {tab === "news" && (
-        <div
-          style={{
-            marginTop: 20,
-            padding: 16,
-            background: "#1e293b",
-            borderRadius: 12,
-          }}
-        >
+        <div style={cardStyle}>
           <h3>Crypto News</h3>
 
           {news.length === 0 ? (
@@ -225,13 +212,7 @@ export default function Home() {
                 key={i}
                 href={n.url}
                 target="_blank"
-                style={{
-                  display: "block",
-                  padding: "10px 0",
-                  borderBottom: "1px solid #334155",
-                  color: "white",
-                  textDecoration: "none",
-                }}
+                style={newsStyle}
               >
                 <strong>{n.title}</strong>
                 <br />
@@ -246,6 +227,13 @@ export default function Home() {
 }
 
 /* ---------------- STYLES ---------------- */
+
+const cardStyle: React.CSSProperties = {
+  marginTop: 20,
+  padding: 16,
+  background: "#1e293b",
+  borderRadius: 12,
+};
 
 const inputStyle: React.CSSProperties = {
   width: "100%",
@@ -262,4 +250,19 @@ const btnStyle: React.CSSProperties = {
   borderRadius: 6,
   color: "white",
   cursor: "pointer",
+};
+
+const rowStyle: React.CSSProperties = {
+  display: "flex",
+  justifyContent: "space-between",
+  padding: "8px 0",
+  borderBottom: "1px solid #334155",
+};
+
+const newsStyle: React.CSSProperties = {
+  display: "block",
+  padding: "10px 0",
+  borderBottom: "1px solid #334155",
+  color: "white",
+  textDecoration: "none",
 };
