@@ -12,14 +12,14 @@ export default function Home() {
   const [coins, setCoins] = useState<any[]>([]);
   const [news, setNews] = useState<any[]>([]);
 
-  // ETH price
+  // ETH Price
   useEffect(() => {
     fetch("https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=inr")
       .then(res => res.json())
       .then(data => setEthPrice(data.ethereum.inr));
   }, []);
 
-  // Coins
+  // Top 50 Coins
   useEffect(() => {
     fetch("https://api.coingecko.com/api/v3/coins/markets?vs_currency=inr&per_page=50")
       .then(res => res.json())
@@ -51,70 +51,121 @@ export default function Home() {
   return (
     <div style={{ padding: 20, background: "#0f172a", color: "white", minHeight: "100vh" }}>
       
-      <h1>Base Utility Hub ⚡</h1>
-      <img src="/base-logo.png" width="50" />
-
-      {/* Tabs */}
-      <div style={{ marginBottom: 20 }}>
-        <button onClick={() => setTab("gas")} style={{ marginRight: 10 }}>Gas</button>
-        <button onClick={() => setTab("prices")} style={{ marginRight: 10 }}>Prices</button>
-        <button onClick={() => setTab("news")}>News</button>
+      {/* HEADER */}
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <img src="/base-logo.png" width="40" />
+        <h1 style={{ fontSize: "20px" }}>Base Utility Hub ⚡</h1>
       </div>
 
-      {/* GAS */}
+      {/* TABS */}
+      <div style={{ marginTop: 20, marginBottom: 20 }}>
+        <button onClick={() => setTab("gas")} style={tabBtn}>Gas</button>
+        <button onClick={() => setTab("prices")} style={tabBtn}>Prices</button>
+        <button onClick={() => setTab("news")} style={tabBtn}>News</button>
+      </div>
+
+      {/* GAS TAB */}
       {tab === "gas" && (
-        <div>
+        <div style={card}>
+          <h2>Gas Fee Estimator</h2>
+
           <input
             placeholder="Gas Price (gwei)"
             value={gasPrice}
             onChange={(e) => setGasPrice(e.target.value)}
-            style={{ display: "block", marginBottom: 10 }}
+            style={input}
           />
 
           <input
             placeholder="Gas Limit"
             value={gasLimit}
             onChange={(e) => setGasLimit(e.target.value)}
-            style={{ display: "block", marginBottom: 10 }}
+            style={input}
           />
 
-          <button onClick={() => calculateFee()}>Calculate</button>
+          <button onClick={() => calculateFee()} style={mainBtn}>
+            Calculate
+          </button>
 
-          <div style={{ marginTop: 10 }}>
-            <button onClick={() => calculateFee(10)}>Low</button>
-            <button onClick={() => calculateFee(20)}>Medium</button>
-            <button onClick={() => calculateFee(30)}>High</button>
+          {/* Presets */}
+          <div>
+            <button onClick={() => calculateFee(10)} style={smallBtn}>Low</button>
+            <button onClick={() => calculateFee(20)} style={smallBtn}>Medium</button>
+            <button onClick={() => calculateFee(30)} style={smallBtn}>High</button>
           </div>
 
-          <p>{result}</p>
+          <p style={{ marginTop: 10 }}>{result}</p>
           <p>ETH Price: ₹{ethPrice}</p>
         </div>
       )}
 
-      {/* PRICES */}
+      {/* PRICES TAB */}
       {tab === "prices" && (
-        <div>
+        <div style={card}>
+          <h2>Top 50 Crypto Prices</h2>
           {coins.map((c) => (
-            <div key={c.id}>
-              {c.name} - ₹{c.current_price}
+            <div key={c.id} style={listItem}>
+              {c.name} — ₹{c.current_price}
             </div>
           ))}
         </div>
       )}
 
-      {/* NEWS */}
+      {/* NEWS TAB */}
       {tab === "news" && (
-        <div>
+        <div style={card}>
+          <h2>Crypto News</h2>
           {news.map((n, i) => (
-            <div key={i}>
-              <a href={n.url} target="_blank">
+            <div key={i} style={listItem}>
+              <a href={n.url} target="_blank" style={{ color: "#38bdf8" }}>
                 {n.title}
               </a>
             </div>
           ))}
         </div>
       )}
-
     </div>
   );
-  }
+}
+
+/* STYLES */
+
+const tabBtn = {
+  marginRight: 10,
+  padding: 8,
+  borderRadius: 6,
+  cursor: "pointer"
+};
+
+const card = {
+  background: "#1e293b",
+  padding: 15,
+  borderRadius: 12
+};
+
+const input = {
+  display: "block",
+  marginBottom: 10,
+  padding: 8,
+  width: "100%",
+  borderRadius: 6
+};
+
+const mainBtn = {
+  padding: 10,
+  marginBottom: 10,
+  borderRadius: 6,
+  cursor: "pointer"
+};
+
+const smallBtn = {
+  marginRight: 5,
+  padding: 6,
+  borderRadius: 6,
+  cursor: "pointer"
+};
+
+const listItem = {
+  padding: 6,
+  borderBottom: "1px solid #334155"
+};
