@@ -10,6 +10,7 @@ type Coin = {
 type NewsItem = {
   title: string;
   url: string;
+  source: string;
 };
 
 export default function Home() {
@@ -30,18 +31,27 @@ export default function Home() {
       .then(data => setEthPrice(data.ethereum.usd));
   }, []);
 
-  // Top coins (USD)
+  // Top 50 coins
   useEffect(() => {
     fetch("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&per_page=50")
       .then(res => res.json())
       .then(data => setCoins(data));
   }, []);
 
-  // News
+  // News (FIXED)
   useEffect(() => {
-    fetch("https://cryptopanic.com/api/v1/posts/?auth_token=demo&public=true")
+    fetch("https://min-api.cryptocompare.com/data/v2/news/?lang=EN")
       .then(res => res.json())
-      .then(data => setNews(data.results));
+      .then(data => {
+        if (data.Data) {
+          const formatted = data.Data.map((n: any) => ({
+            title: n.title,
+            url: n.url,
+            source: n.source_info?.name || "Unknown"
+          }));
+          setNews(formatted);
+        }
+      });
   }, []);
 
   const calculateFee = (price?: number) => {
@@ -61,10 +71,14 @@ export default function Home() {
 
   return (
     <div style={container}>
-      
+
       {/* HEADER */}
       <div style={header}>
-        <img src="/base-logo.png" style={{ width: 40, height: 40 }} alt="Base logo" />
+        <img
+          src="/base-logo.png"
+          alt="Base logo"
+          style={{ height: 28, width: "auto" }}
+        />
         <h1 style={title}>Base Utility Hub ⚡</h1>
       </div>
 
@@ -116,6 +130,9 @@ export default function Home() {
         {tab === "prices" && (
           <>
             <h2 style={sectionTitle}>Top 50 Crypto Prices</h2>
+
+            {coins.length === 0 && <p>Loading prices...</p>}
+
             {coins.map((c) => (
               <div key={c.id} style={listItem}>
                 {c.name} — ${c.current_price}
@@ -128,11 +145,17 @@ export default function Home() {
         {tab === "news" && (
           <>
             <h2 style={sectionTitle}>Crypto News</h2>
+
+            {news.length === 0 && <p>Loading news...</p>}
+
             {news.map((n, i) => (
               <div key={i} style={listItem}>
                 <a href={n.url} target="_blank" style={{ color: "#38bdf8" }}>
                   {n.title}
                 </a>
+                <div style={{ fontSize: 12, opacity: 0.6 }}>
+                  {n.source}
+                </div>
               </div>
             ))}
           </>
@@ -156,13 +179,13 @@ const container = {
 const header = {
   display: "flex",
   alignItems: "center",
-  gap: 10,
+  gap: 8,
   marginBottom: 20
 };
 
 const title = {
-  fontSize: "22px",
-  fontWeight: "bold"
+  fontSize: "18px",
+  fontWeight: "600"
 };
 
 const tabs = {
@@ -175,7 +198,8 @@ const tabBtn = {
   borderRadius: 8,
   background: "#1e293b",
   color: "white",
-  border: "1px solid #334155"
+  border: "1px solid #334155",
+  cursor: "pointer"
 };
 
 const activeTab = {
