@@ -40,7 +40,7 @@ export default function Home() {
   const [coins, setCoins] = useState<Coin[]>([]);
   const [news, setNews] = useState<NewsItem[]>([]);
 
-  /* ---------------- ETH PRICE AUTO REFRESH ---------------- */
+  /* ---------------- ETH PRICE ---------------- */
 
   useEffect(() => {
     const fetchETH = () => {
@@ -54,16 +54,15 @@ export default function Home() {
 
     fetchETH();
     const interval = setInterval(fetchETH, 30000);
-
     return () => clearInterval(interval);
   }, []);
 
-  /* ---------------- COINS AUTO REFRESH ---------------- */
+  /* ---------------- COINS ---------------- */
 
   useEffect(() => {
     const fetchCoins = () => {
       fetch(
-        "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=20&page=1"
+        "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&per_page=20&page=1"
       )
         .then((res) => res.json())
         .then((data: Coin[]) => setCoins(data))
@@ -72,11 +71,10 @@ export default function Home() {
 
     fetchCoins();
     const interval = setInterval(fetchCoins, 30000);
-
     return () => clearInterval(interval);
   }, []);
 
-  /* ---------------- NEWS FIXED ---------------- */
+  /* ---------------- NEWS ---------------- */
 
   useEffect(() => {
     fetch(
@@ -90,7 +88,6 @@ export default function Home() {
             url: n.url,
             source: n.source?.title || "Unknown",
           }));
-
           setNews(formatted);
         }
       })
@@ -126,15 +123,40 @@ export default function Home() {
         padding: 16,
       }}
     >
-      {/* HEADER */}
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <Image
-          src="/base-logo.png"
-          alt="Base Logo"
-          width={32}
-          height={32}
-        />
-        <h2 style={{ margin: 0 }}>Base Utility Hub ⚡</h2>
+      {/* HEADER (FIXED LOGO) */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+        }}
+      >
+        <div
+          style={{
+            width: 40,
+            height: 40,
+            background: "white",
+            borderRadius: 10,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            overflow: "hidden",
+          }}
+        >
+          <Image
+            src="/base-logo.png"
+            alt="Base Logo"
+            width={28}
+            height={28}
+            style={{
+              objectFit: "contain",
+            }}
+          />
+        </div>
+
+        <h2 style={{ margin: 0, fontWeight: 600 }}>
+          Base Utility Hub ⚡
+        </h2>
       </div>
 
       {/* TABS */}
@@ -145,11 +167,12 @@ export default function Home() {
             onClick={() => setTab(t as "gas" | "prices" | "news")}
             style={{
               padding: "8px 14px",
-              borderRadius: 8,
+              borderRadius: 10,
               border: "none",
               cursor: "pointer",
               background: tab === t ? "#2563eb" : "#1e293b",
               color: "white",
+              fontWeight: 500,
             }}
           >
             {t.toUpperCase()}
@@ -157,26 +180,26 @@ export default function Home() {
         ))}
       </div>
 
-      {/* ---------------- GAS ---------------- */}
+      {/* GAS */}
       {tab === "gas" && (
-        <div style={cardStyle}>
+        <div style={card}>
           <h3>Gas Fee Estimator</h3>
 
           <input
             placeholder="Gas Price (gwei)"
             value={gasPrice}
             onChange={(e) => setGasPrice(e.target.value)}
-            style={inputStyle}
+            style={input}
           />
 
           <input
             placeholder="Gas Limit"
             value={gasLimit}
             onChange={(e) => setGasLimit(e.target.value)}
-            style={inputStyle}
+            style={input}
           />
 
-          <button onClick={calculateFee} style={btnStyle}>
+          <button onClick={calculateFee} style={btn}>
             Calculate
           </button>
 
@@ -185,13 +208,13 @@ export default function Home() {
         </div>
       )}
 
-      {/* ---------------- PRICES ---------------- */}
+      {/* PRICES */}
       {tab === "prices" && (
-        <div style={cardStyle}>
+        <div style={card}>
           <h3>Top Crypto Prices</h3>
 
           {coins.map((c) => (
-            <div key={c.id} style={rowStyle}>
+            <div key={c.id} style={row}>
               <span>{c.name}</span>
               <span>${c.current_price}</span>
             </div>
@@ -199,21 +222,16 @@ export default function Home() {
         </div>
       )}
 
-      {/* ---------------- NEWS ---------------- */}
+      {/* NEWS */}
       {tab === "news" && (
-        <div style={cardStyle}>
+        <div style={card}>
           <h3>Crypto News</h3>
 
           {news.length === 0 ? (
             <p>No news available</p>
           ) : (
             news.map((n, i) => (
-              <a
-                key={i}
-                href={n.url}
-                target="_blank"
-                style={newsStyle}
-              >
+              <a key={i} href={n.url} target="_blank" style={newsItem}>
                 <strong>{n.title}</strong>
                 <br />
                 <small style={{ color: "#94a3b8" }}>{n.source}</small>
@@ -228,14 +246,14 @@ export default function Home() {
 
 /* ---------------- STYLES ---------------- */
 
-const cardStyle: React.CSSProperties = {
+const card: React.CSSProperties = {
   marginTop: 20,
   padding: 16,
   background: "#1e293b",
   borderRadius: 12,
 };
 
-const inputStyle: React.CSSProperties = {
+const input: React.CSSProperties = {
   width: "100%",
   padding: 10,
   marginBottom: 10,
@@ -243,7 +261,7 @@ const inputStyle: React.CSSProperties = {
   border: "none",
 };
 
-const btnStyle: React.CSSProperties = {
+const btn: React.CSSProperties = {
   padding: "10px 14px",
   background: "#2563eb",
   border: "none",
@@ -252,14 +270,14 @@ const btnStyle: React.CSSProperties = {
   cursor: "pointer",
 };
 
-const rowStyle: React.CSSProperties = {
+const row: React.CSSProperties = {
   display: "flex",
   justifyContent: "space-between",
   padding: "8px 0",
   borderBottom: "1px solid #334155",
 };
 
-const newsStyle: React.CSSProperties = {
+const newsItem: React.CSSProperties = {
   display: "block",
   padding: "10px 0",
   borderBottom: "1px solid #334155",
