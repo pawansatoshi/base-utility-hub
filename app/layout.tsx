@@ -7,21 +7,22 @@ import "./globals.css";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: farcasterConfig.miniapp.name,
-    description: farcasterConfig.miniapp.description,
+    title: "Base Utility Hub",
+    description: "All-in-one Base utility app",
+
     other: {
       "fc:frame": JSON.stringify({
-        version: farcasterConfig.miniapp.version,
-        imageUrl: farcasterConfig.miniapp.heroImageUrl,
+        version: "1",
+        imageUrl: "https://base-utility-hub.vercel.app/image.png",
         button: {
-          title: `Join the ${farcasterConfig.miniapp.name} Waitlist`,
+          title: "Open Base Utility",
           action: {
-            name: `Launch ${farcasterConfig.miniapp.name}`,
             type: "launch_frame",
-          },
-        },
-      }),
-    },
+            name: "Launch App"
+          }
+        }
+      })
+    }
   };
 }
 
