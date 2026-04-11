@@ -43,6 +43,9 @@ export default function RootLayout({
   return (
     <Providers>
       <html lang="en">
+        <head>
+        <meta name="base:app_id" content="69da2ff92c63bda0567315e3" />
+        </head>
         <body className={`${inter.variable} ${sourceCodePro.variable}`}>
           <SafeArea>{children}</SafeArea>
         </body>
