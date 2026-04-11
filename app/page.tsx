@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 
+/* ---------------- TYPES ---------------- */
+
 type Coin = {
   id: string;
   name: string;
@@ -15,60 +17,73 @@ type NewsItem = {
   source: string;
 };
 
+type ApiNews = {
+  title: string;
+  url: string;
+  source?: {
+    title: string;
+  };
+};
+
+/* ---------------- COMPONENT ---------------- */
+
 export default function Home() {
   const [tab, setTab] = useState<"gas" | "prices" | "news">("gas");
 
-  const [gasPrice, setGasPrice] = useState<string>("");
-  const [gasLimit, setGasLimit] = useState<string>("");
-  const [result, setResult] = useState<string>("");
-  const [ethPrice, setEthPrice] = useState<number>(0);
+  const [gasPrice, setGasPrice] = useState("");
+  const [gasLimit, setGasLimit] = useState("");
+  const [result, setResult] = useState("");
 
+  const [ethPrice, setEthPrice] = useState<number>(0);
   const [coins, setCoins] = useState<Coin[]>([]);
   const [news, setNews] = useState<NewsItem[]>([]);
 
-  // ETH price (USD)
+  /* ---------------- ETH PRICE (USD) ---------------- */
+
   useEffect(() => {
-    fetch("https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd")
-      .then(res => res.json())
-      .then(data => {
-        if (data?.ethereum?.usd) {
-          setEthPrice(data.ethereum.usd);
-        }
-      });
+    fetch(
+      "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd"
+    )
+      .then((res) => res.json())
+      .then((data) => setEthPrice(data.ethereum.usd))
+      .catch(() => setEthPrice(0));
   }, []);
 
-  // Top 50 coins
+  /* ---------------- TOP COINS ---------------- */
+
   useEffect(() => {
-    fetch("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&per_page=50")
-      .then(res => res.json())
+    fetch(
+      "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=20&page=1"
+    )
+      .then((res) => res.json())
       .then((data: Coin[]) => setCoins(data))
       .catch(() => setCoins([]));
   }, []);
 
-  // ✅ FIXED NEWS (NO "any", VERCEL SAFE)
+  /* ---------------- NEWS (FIXED API) ---------------- */
+
   useEffect(() => {
-    fetch("https://min-api.cryptocompare.com/data/v2/news/?lang=EN")
-      .then(res => res.json())
-      .then(data => {
-        if (data?.Data) {
-          const formatted: NewsItem[] = data.Data.map((n: {
-            title: string;
-            url: string;
-            source_info?: { name: string };
-          }) => ({
+    fetch(
+      "https://cryptopanic.com/api/v1/posts/?auth_token=demo&public=true"
+    )
+      .then((res) => res.json())
+      .then((data: { results: ApiNews[] }) => {
+        if (data?.results) {
+          const formatted: NewsItem[] = data.results.map((n) => ({
             title: n.title,
             url: n.url,
-            source: n.source_info?.name || "Unknown"
+            source: n.source?.title || "Unknown",
           }));
-
           setNews(formatted);
         }
       })
       .catch(() => setNews([]));
   }, []);
 
-  const calculateFee = (price?: number) => {
-    const p = price ?? parseFloat(gasPrice);
+  /* ---------------- GAS CALC ---------------- */
+
+  const calculateFee = () => {
+    const p = parseFloat(gasPrice);
     const l = parseFloat(gasLimit);
 
     if (!p || !l) {
@@ -79,180 +94,172 @@ export default function Home() {
     const feeETH = (p * l) / 1e9;
     const feeUSD = feeETH * ethPrice;
 
-    setResult(`Fee: ${feeETH.toFixed(6)} ETH (~$${feeUSD.toFixed(2)})`);
+    setResult(`${feeETH.toFixed(6)} ETH (~$${feeUSD.toFixed(2)})`);
   };
 
+  /* ---------------- UI ---------------- */
+
   return (
-    <div style={container}>
-      
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "#0f172a",
+        color: "white",
+        fontFamily: "system-ui",
+        padding: 16,
+      }}
+    >
       {/* HEADER */}
-      <div style={header}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         <Image
           src="/base-logo.png"
-          alt="Base logo"
+          alt="Base Logo"
           width={32}
           height={32}
+          style={{ borderRadius: 6 }}
         />
-        <h1 style={title}>Base Utility Hub ⚡</h1>
+        <h2 style={{ margin: 0 }}>Base Utility Hub ⚡</h2>
       </div>
 
       {/* TABS */}
-      <div style={tabs}>
-        <button onClick={() => setTab("gas")} style={tab === "gas" ? activeTab : tabBtn}>Gas</button>
-        <button onClick={() => setTab("prices")} style={tab === "prices" ? activeTab : tabBtn}>Prices</button>
-        <button onClick={() => setTab("news")} style={tab === "news" ? activeTab : tabBtn}>News</button>
+      <div style={{ marginTop: 16, display: "flex", gap: 10 }}>
+        {["gas", "prices", "news"].map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t as any)}
+            style={{
+              padding: "8px 14px",
+              borderRadius: 8,
+              border: "none",
+              cursor: "pointer",
+              background: tab === t ? "#2563eb" : "#1e293b",
+              color: "white",
+            }}
+          >
+            {t.toUpperCase()}
+          </button>
+        ))}
       </div>
 
-      {/* CARD */}
-      <div style={card}>
+      {/* ---------------- GAS ---------------- */}
+      {tab === "gas" && (
+        <div
+          style={{
+            marginTop: 20,
+            padding: 16,
+            background: "#1e293b",
+            borderRadius: 12,
+          }}
+        >
+          <h3>Gas Fee Estimator</h3>
 
-        {/* GAS */}
-        {tab === "gas" && (
-          <>
-            <h2 style={sectionTitle}>Gas Fee Estimator</h2>
+          <input
+            placeholder="Gas Price (gwei)"
+            value={gasPrice}
+            onChange={(e) => setGasPrice(e.target.value)}
+            style={inputStyle}
+          />
 
-            <input
-              placeholder="Gas Price (gwei)"
-              value={gasPrice}
-              onChange={(e) => setGasPrice(e.target.value)}
-              style={input}
-            />
+          <input
+            placeholder="Gas Limit"
+            value={gasLimit}
+            onChange={(e) => setGasLimit(e.target.value)}
+            style={inputStyle}
+          />
 
-            <input
-              placeholder="Gas Limit"
-              value={gasLimit}
-              onChange={(e) => setGasLimit(e.target.value)}
-              style={input}
-            />
+          <button onClick={calculateFee} style={btnStyle}>
+            Calculate
+          </button>
 
-            <button onClick={() => calculateFee()} style={mainBtn}>
-              Calculate
-            </button>
+          <p>ETH Price: ${ethPrice}</p>
+          <p>{result}</p>
+        </div>
+      )}
 
-            <div style={{ marginTop: 10 }}>
-              <button onClick={() => calculateFee(10)} style={smallBtn}>Low</button>
-              <button onClick={() => calculateFee(20)} style={smallBtn}>Medium</button>
-              <button onClick={() => calculateFee(30)} style={smallBtn}>High</button>
+      {/* ---------------- PRICES ---------------- */}
+      {tab === "prices" && (
+        <div
+          style={{
+            marginTop: 20,
+            padding: 16,
+            background: "#1e293b",
+            borderRadius: 12,
+          }}
+        >
+          <h3>Top Crypto Prices</h3>
+
+          {coins.map((c) => (
+            <div
+              key={c.id}
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                padding: "8px 0",
+                borderBottom: "1px solid #334155",
+              }}
+            >
+              <span>{c.name}</span>
+              <span>${c.current_price}</span>
             </div>
+          ))}
+        </div>
+      )}
 
-            <p style={{ marginTop: 10 }}>{result}</p>
-            <p style={{ opacity: 0.7 }}>ETH Price: ${ethPrice}</p>
-          </>
-        )}
+      {/* ---------------- NEWS ---------------- */}
+      {tab === "news" && (
+        <div
+          style={{
+            marginTop: 20,
+            padding: 16,
+            background: "#1e293b",
+            borderRadius: 12,
+          }}
+        >
+          <h3>Crypto News</h3>
 
-        {/* PRICES */}
-        {tab === "prices" && (
-          <>
-            <h2 style={sectionTitle}>Top 50 Crypto Prices</h2>
-
-            {coins.length === 0 && <p>Loading prices...</p>}
-
-            {coins.map((c) => (
-              <div key={c.id} style={listItem}>
-                {c.name} — ${c.current_price}
-              </div>
-            ))}
-          </>
-        )}
-
-        {/* NEWS */}
-        {tab === "news" && (
-          <>
-            <h2 style={sectionTitle}>Crypto News</h2>
-
-            {news.length === 0 && <p>Loading news...</p>}
-
-            {news.map((n, i) => (
-              <div key={i} style={listItem}>
-                <a href={n.url} target="_blank" style={{ color: "#38bdf8" }}>
-                  {n.title}
-                </a>
-                <div style={{ fontSize: 12, opacity: 0.6 }}>
-                  {n.source}
-                </div>
-              </div>
-            ))}
-          </>
-        )}
-
-      </div>
+          {news.length === 0 ? (
+            <p>No news available</p>
+          ) : (
+            news.map((n, i) => (
+              <a
+                key={i}
+                href={n.url}
+                target="_blank"
+                style={{
+                  display: "block",
+                  padding: "10px 0",
+                  borderBottom: "1px solid #334155",
+                  color: "white",
+                  textDecoration: "none",
+                }}
+              >
+                <strong>{n.title}</strong>
+                <br />
+                <small style={{ color: "#94a3b8" }}>{n.source}</small>
+              </a>
+            ))
+          )}
+        </div>
+      )}
     </div>
   );
 }
 
-/* 🎨 STYLES */
+/* ---------------- STYLES ---------------- */
 
-const container = {
-  padding: 20,
-  background: "#0f172a",
-  color: "white",
-  minHeight: "100vh",
-  fontFamily: "Arial"
-};
-
-const header = {
-  display: "flex",
-  alignItems: "center",
-  gap: 8,
-  marginBottom: 20
-};
-
-const title = {
-  fontSize: "18px",
-  fontWeight: "600"
-};
-
-const tabs = {
-  marginBottom: 20
-};
-
-const tabBtn = {
-  marginRight: 10,
-  padding: "8px 12px",
-  borderRadius: 8,
-  background: "#1e293b",
-  color: "white",
-  border: "1px solid #334155",
-  cursor: "pointer"
-};
-
-const activeTab = {
-  ...tabBtn,
-  background: "#2563eb"
-};
-
-const card = {
-  background: "#1e293b",
-  padding: 15,
-  borderRadius: 12
-};
-
-const sectionTitle = {
-  marginBottom: 10
-};
-
-const input = {
-  display: "block",
-  marginBottom: 10,
-  padding: 10,
+const inputStyle: React.CSSProperties = {
   width: "100%",
-  borderRadius: 6
-};
-
-const mainBtn = {
   padding: 10,
+  marginBottom: 10,
   borderRadius: 6,
-  cursor: "pointer"
+  border: "none",
 };
 
-const smallBtn = {
-  marginRight: 5,
-  padding: 6,
+const btnStyle: React.CSSProperties = {
+  padding: "10px 14px",
+  background: "#2563eb",
+  border: "none",
   borderRadius: 6,
-  cursor: "pointer"
-};
-
-const listItem = {
-  padding: 8,
-  borderBottom: "1px solid #334155"
+  color: "white",
+  cursor: "pointer",
 };
