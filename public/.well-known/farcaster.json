@@ -6,13 +6,13 @@
   },
   "frame": {
     "version": "1",
-    "name": "Example Frame",
+    "name": "Base Utility Hub",
     "iconUrl": "https://base-utility-hub.vercel.app/icon.png",
     "homeUrl": "https://base-utility-hub.vercel.app",
     "imageUrl": "https://base-utility-hub.vercel.app/image.png",
-    "buttonTitle": "Check this out",
+    "buttonTitle": "Open Base Utility Hub",
     "splashImageUrl": "https://base-utility-hub.vercel.app/splash.png",
-    "splashBackgroundColor": "#eeccff",
+    "splashBackgroundColor": "#000000",
     "webhookUrl": "https://base-utility-hub.vercel.app/api/webhook"
   }
 }
