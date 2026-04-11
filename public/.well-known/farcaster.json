@@ -1,15 +1,18 @@
 {
   "accountAssociation": {
-    "header": "eyJmaWQiOjgxNzIwMCwidHlwZSI6ImN1c3RvZHkiLCJrZXkiOiIweDI4NzE0ZDVkZjljYjU1ZkM5RmQwQUJFMjk0ODlGNjk1MTI4OTU1NUMifQ",
+    "header": "eyJmaWQiOjgxNzIwMCwidHlwZSI6ImN1c3RvZHkiLCJrZXkiOiIweDI4NzEzODVkZjlGYjU1ZkM5RmQwQUJFMjk0ODlGNjk1MTI4OTU1NUMifQ",
     "payload": "eyJkb21haW4iOiJiYXNlLXV0aWxpdHktaHViLnZlcmNlbC5hcHAifQ",
-    "signature": "MhBghPwdt2JRnUqTvFE1fzGrbdKkERH6g58HTELgEsZPwg0087UxuLSAIBsTF79FyJ931ZwrkJV+Aab6iEKjlBw=="
+    "signature": "/EuGtkK51WxxBZdw8slY3cxqH7y7AwwkS0xkVSh1f9syrlaoyAq/iXwd/N/kTybyz0sMaJkGS+lKUd9FaX6k2Bs="
   },
   "frame": {
     "version": "1",
-    "name": "Base Utility Hub",
-    "iconUrl": "https://base-utility-hub.vercel.app/base-logo.png",
+    "name": "Example Frame",
+    "iconUrl": "https://base-utility-hub.vercel.app/icon.png",
     "homeUrl": "https://base-utility-hub.vercel.app",
-    "imageUrl": "https://base-utility-hub.vercel.app/base-logo.png",
-    "buttonTitle": "Open App"
+    "imageUrl": "https://base-utility-hub.vercel.app/image.png",
+    "buttonTitle": "Check this out",
+    "splashImageUrl": "https://base-utility-hub.vercel.app/splash.png",
+    "splashBackgroundColor": "#eeccff",
+    "webhookUrl": "https://base-utility-hub.vercel.app/api/webhook"
   }
 }
