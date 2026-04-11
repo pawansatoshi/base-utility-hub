@@ -1,1 +1,15 @@
-
+{
+  "accountAssociation": {
+    "header": "eyJmaWQiOjgxNzIwMCwidHlwZSI6ImN1c3RvZHkiLCJrZXkiOiIweDI4NzE0ZDVkZjljYjU1ZkM5RmQwQUJFMjk0ODlGNjk1MTI4OTU1NUMifQ",
+    "payload": "eyJkb21haW4iOiJiYXNlLXV0aWxpdHktaHViLnZlcmNlbC5hcHAifQ",
+    "signature": "MhBghPwdt2JRnUqTvFE1fzGrbdKkERH6g58HTELgEsZPwg0087UxuLSAIBsTF79FyJ931ZwrkJV+Aab6iEKjlBw=="
+  },
+  "frame": {
+    "version": "1",
+    "name": "Base Utility Hub",
+    "iconUrl": "https://base-utility-hub.vercel.app/base-logo.png",
+    "homeUrl": "https://base-utility-hub.vercel.app",
+    "imageUrl": "https://base-utility-hub.vercel.app/base-logo.png",
+    "buttonTitle": "Open App"
+  }
+}
