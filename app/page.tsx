@@ -19,21 +19,25 @@ export default function Home() {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loadingNews, setLoadingNews] = useState(true);
 
-  // 🔥 FETCH PRICES
+  const [gasPrice, setGasPrice] = useState("");
+  const [gasLimit, setGasLimit] = useState("");
+  const [result, setResult] = useState("");
+
+  // ✅ FETCH PRICES (every 2 sec)
   const fetchPrices = async () => {
     try {
       const res = await fetch(
-        "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=20&page=1&sparkline=false",
+        "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&per_page=20",
         { cache: "no-store" }
       );
       const data = await res.json();
       setCoins(data);
-    } catch (e) {
-      console.log("price error", e);
+    } catch (err) {
+      console.log("price error");
     }
   };
 
-  // 📰 FETCH NEWS
+  // ✅ FETCH NEWS (safe fallback)
   const fetchNews = async () => {
     try {
       const res = await fetch(
@@ -41,31 +45,24 @@ export default function Home() {
       );
       const data = await res.json();
 
-      const formatted =
-        data.Data?.slice(0, 10).map((item: any) => ({
+      const formatted: NewsItem[] =
+        data?.Data?.slice(0, 10).map((item: { title: string; url: string }) => ({
           title: item.title,
           url: item.url,
         })) || [];
 
       setNews(formatted);
-    } catch (e) {
-      console.log("news fallback");
-
+    } catch (err) {
       setNews([
-        {
-          title: "Crypto market showing strong recovery momentum",
-          url: "#",
-        },
-        {
-          title: "Base ecosystem gaining traction among developers",
-          url: "#",
-        },
+        { title: "Crypto market showing recovery", url: "#" },
+        { title: "Base ecosystem growing fast", url: "#" },
       ]);
     } finally {
       setLoadingNews(false);
     }
   };
 
+  // ✅ AUTO REFRESH
   useEffect(() => {
     fetchPrices();
     fetchNews();
@@ -74,40 +71,39 @@ export default function Home() {
     return () => clearInterval(interval);
   }, []);
 
+  // ✅ GAS CALCULATION
+  const calculateGas = () => {
+    const p = parseFloat(gasPrice);
+    const l = parseFloat(gasLimit);
+
+    if (!p || !l) {
+      setResult("Enter valid values");
+      return;
+    }
+
+    const feeETH = (p * l) / 1e9;
+    setResult(`${feeETH.toFixed(6)} ETH`);
+  };
+
   return (
     <main style={styles.container}>
       {/* HEADER */}
       <div style={styles.header}>
         <img src="/base-logo.png" style={styles.logo} />
-        <h1>Base Utility Hub ⚡</h1>
+        <h2>Base Utility Hub ⚡</h2>
       </div>
 
       {/* TABS */}
       <div style={styles.tabs}>
-        <button
-          onClick={() => setTab("prices")}
-          style={tab === "prices" ? styles.activeTab : styles.tab}
-        >
-          Prices
-        </button>
-        <button
-          onClick={() => setTab("gas")}
-          style={tab === "gas" ? styles.activeTab : styles.tab}
-        >
-          Gas
-        </button>
-        <button
-          onClick={() => setTab("news")}
-          style={tab === "news" ? styles.activeTab : styles.tab}
-        >
-          News
-        </button>
+        <button onClick={() => setTab("prices")} style={tab === "prices" ? styles.activeTab : styles.tab}>Prices</button>
+        <button onClick={() => setTab("gas")} style={tab === "gas" ? styles.activeTab : styles.tab}>Gas</button>
+        <button onClick={() => setTab("news")} style={tab === "news" ? styles.activeTab : styles.tab}>News</button>
       </div>
 
       {/* PRICES */}
       {tab === "prices" && (
         <div style={styles.card}>
-          <h2>Live Crypto Prices</h2>
+          <h3>Live Crypto Prices</h3>
           {coins.map((coin) => (
             <div key={coin.id} style={styles.row}>
               <span>{coin.name}</span>
@@ -120,20 +116,21 @@ export default function Home() {
       {/* GAS */}
       {tab === "gas" && (
         <div style={styles.card}>
-          <h2>Gas Estimator</h2>
-          <input placeholder="Gas Price (gwei)" style={styles.input} />
-          <input placeholder="Gas Limit" style={styles.input} />
-          <button style={styles.button}>Calculate</button>
+          <h3>Gas Estimator</h3>
+          <input placeholder="Gas Price" onChange={(e) => setGasPrice(e.target.value)} style={styles.input} />
+          <input placeholder="Gas Limit" onChange={(e) => setGasLimit(e.target.value)} style={styles.input} />
+          <button onClick={calculateGas} style={styles.button}>Calculate</button>
+          <p>{result}</p>
         </div>
       )}
 
       {/* NEWS */}
       {tab === "news" && (
         <div style={styles.card}>
-          <h2>Crypto News</h2>
+          <h3>Crypto News</h3>
 
           {loadingNews ? (
-            <p>Loading news...</p>
+            <p>Loading...</p>
           ) : news.length === 0 ? (
             <p>No news available</p>
           ) : (
@@ -149,13 +146,13 @@ export default function Home() {
   );
 }
 
+/* STYLES */
 const styles: any = {
   container: {
     padding: 16,
     background: "#0b1220",
     minHeight: "100vh",
     color: "white",
-    fontFamily: "sans-serif",
   },
   header: {
     display: "flex",
@@ -166,26 +163,25 @@ const styles: any = {
   logo: {
     width: 32,
     height: 32,
-    objectFit: "contain",
   },
   tabs: {
     display: "flex",
     gap: 10,
-    marginBottom: 20,
+    marginBottom: 16,
   },
   tab: {
-    padding: "8px 16px",
+    padding: "8px 14px",
     background: "#1e293b",
+    border: "none",
     borderRadius: 8,
     color: "white",
-    border: "none",
   },
   activeTab: {
-    padding: "8px 16px",
+    padding: "8px 14px",
     background: "#2563eb",
+    border: "none",
     borderRadius: 8,
     color: "white",
-    border: "none",
   },
   card: {
     background: "#1e293b",
@@ -195,7 +191,7 @@ const styles: any = {
   row: {
     display: "flex",
     justifyContent: "space-between",
-    padding: "8px 0",
+    padding: "6px 0",
     borderBottom: "1px solid #334155",
   },
   input: {
@@ -208,15 +204,14 @@ const styles: any = {
   button: {
     marginTop: 10,
     padding: 10,
-    borderRadius: 6,
     background: "#2563eb",
-    color: "white",
     border: "none",
+    borderRadius: 6,
+    color: "white",
   },
   news: {
     display: "block",
-    padding: "8px 0",
-    borderBottom: "1px solid #334155",
+    marginTop: 10,
     color: "#60a5fa",
     textDecoration: "none",
   },
