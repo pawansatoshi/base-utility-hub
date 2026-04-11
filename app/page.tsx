@@ -1,5 +1,7 @@
 "use client";
+
 import { useState, useEffect } from "react";
+import Image from "next/image";
 
 type Coin = {
   id: string;
@@ -14,12 +16,12 @@ type NewsItem = {
 };
 
 export default function Home() {
-  const [tab, setTab] = useState("gas");
+  const [tab, setTab] = useState<"gas" | "prices" | "news">("gas");
 
-  const [gasPrice, setGasPrice] = useState("");
-  const [gasLimit, setGasLimit] = useState("");
-  const [result, setResult] = useState("");
-  const [ethPrice, setEthPrice] = useState(0);
+  const [gasPrice, setGasPrice] = useState<string>("");
+  const [gasLimit, setGasLimit] = useState<string>("");
+  const [result, setResult] = useState<string>("");
+  const [ethPrice, setEthPrice] = useState<number>(0);
 
   const [coins, setCoins] = useState<Coin[]>([]);
   const [news, setNews] = useState<NewsItem[]>([]);
@@ -28,34 +30,45 @@ export default function Home() {
   useEffect(() => {
     fetch("https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd")
       .then(res => res.json())
-      .then(data => setEthPrice(data.ethereum.usd));
+      .then(data => {
+        if (data?.ethereum?.usd) {
+          setEthPrice(data.ethereum.usd);
+        }
+      });
   }, []);
 
   // Top 50 coins
   useEffect(() => {
     fetch("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&per_page=50")
       .then(res => res.json())
-      .then(data => setCoins(data));
+      .then((data: Coin[]) => setCoins(data))
+      .catch(() => setCoins([]));
   }, []);
 
-  // News (FIXED)
+  // ✅ FIXED NEWS (NO "any", VERCEL SAFE)
   useEffect(() => {
     fetch("https://min-api.cryptocompare.com/data/v2/news/?lang=EN")
       .then(res => res.json())
       .then(data => {
-        if (data.Data) {
-          const formatted = data.Data.map((n: any) => ({
+        if (data?.Data) {
+          const formatted: NewsItem[] = data.Data.map((n: {
+            title: string;
+            url: string;
+            source_info?: { name: string };
+          }) => ({
             title: n.title,
             url: n.url,
             source: n.source_info?.name || "Unknown"
           }));
+
           setNews(formatted);
         }
-      });
+      })
+      .catch(() => setNews([]));
   }, []);
 
   const calculateFee = (price?: number) => {
-    const p = price || parseFloat(gasPrice);
+    const p = price ?? parseFloat(gasPrice);
     const l = parseFloat(gasLimit);
 
     if (!p || !l) {
@@ -71,13 +84,14 @@ export default function Home() {
 
   return (
     <div style={container}>
-
+      
       {/* HEADER */}
       <div style={header}>
-        <img
+        <Image
           src="/base-logo.png"
           alt="Base logo"
-          style={{ height: 28, width: "auto" }}
+          width={32}
+          height={32}
         />
         <h1 style={title}>Base Utility Hub ⚡</h1>
       </div>
