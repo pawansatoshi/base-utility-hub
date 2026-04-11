@@ -20,22 +20,24 @@ export default function Home() {
   const [result, setResult] = useState("");
   const [ethPrice, setEthPrice] = useState(0);
 
-  // ✅ NO ANY (typed properly)
   const [coins, setCoins] = useState<Coin[]>([]);
   const [news, setNews] = useState<NewsItem[]>([]);
 
+  // ETH price (USD)
   useEffect(() => {
-    fetch("https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=inr")
+    fetch("https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd")
       .then(res => res.json())
-      .then(data => setEthPrice(data.ethereum.inr));
+      .then(data => setEthPrice(data.ethereum.usd));
   }, []);
 
+  // Top coins (USD)
   useEffect(() => {
-    fetch("https://api.coingecko.com/api/v3/coins/markets?vs_currency=inr&per_page=50")
+    fetch("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&per_page=50")
       .then(res => res.json())
       .then(data => setCoins(data));
   }, []);
 
+  // News
   useEffect(() => {
     fetch("https://cryptopanic.com/api/v1/posts/?auth_token=demo&public=true")
       .then(res => res.json())
@@ -52,61 +54,167 @@ export default function Home() {
     }
 
     const feeETH = (p * l) / 1e9;
-    const feeINR = feeETH * ethPrice;
+    const feeUSD = feeETH * ethPrice;
 
-    setResult(`Fee: ${feeETH.toFixed(6)} ETH (~₹${feeINR.toFixed(2)})`);
+    setResult(`Fee: ${feeETH.toFixed(6)} ETH (~$${feeUSD.toFixed(2)})`);
   };
 
   return (
-    <div style={{ padding: 20, background: "#0f172a", color: "white", minHeight: "100vh" }}>
-
-      <h1>Base Utility Hub ⚡</h1>
-
-      <div style={{ marginBottom: 20 }}>
-        <button onClick={() => setTab("gas")}>Gas</button>
-        <button onClick={() => setTab("prices")}>Prices</button>
-        <button onClick={() => setTab("news")}>News</button>
+    <div style={container}>
+      
+      {/* HEADER */}
+      <div style={header}>
+        <img src="/base-logo.png" style={{ width: 40, height: 40 }} alt="Base logo" />
+        <h1 style={title}>Base Utility Hub ⚡</h1>
       </div>
 
-      {tab === "gas" && (
-        <div>
-          <input placeholder="Gas Price" onChange={(e)=>setGasPrice(e.target.value)} />
-          <input placeholder="Gas Limit" onChange={(e)=>setGasLimit(e.target.value)} />
-          <button onClick={()=>calculateFee()}>Calculate</button>
+      {/* TABS */}
+      <div style={tabs}>
+        <button onClick={() => setTab("gas")} style={tab === "gas" ? activeTab : tabBtn}>Gas</button>
+        <button onClick={() => setTab("prices")} style={tab === "prices" ? activeTab : tabBtn}>Prices</button>
+        <button onClick={() => setTab("news")} style={tab === "news" ? activeTab : tabBtn}>News</button>
+      </div>
 
-          <div>
-            <button onClick={()=>calculateFee(10)}>Low</button>
-            <button onClick={()=>calculateFee(20)}>Medium</button>
-            <button onClick={()=>calculateFee(30)}>High</button>
-          </div>
+      {/* CARD */}
+      <div style={card}>
 
-          <p>{result}</p>
-          <p>ETH Price: ₹{ethPrice}</p>
-        </div>
-      )}
+        {/* GAS */}
+        {tab === "gas" && (
+          <>
+            <h2 style={sectionTitle}>Gas Fee Estimator</h2>
 
-      {tab === "prices" && (
-        <div>
-          {coins.map((c) => (
-            <div key={c.id}>
-              {c.name} - ₹{c.current_price}
+            <input
+              placeholder="Gas Price (gwei)"
+              value={gasPrice}
+              onChange={(e) => setGasPrice(e.target.value)}
+              style={input}
+            />
+
+            <input
+              placeholder="Gas Limit"
+              value={gasLimit}
+              onChange={(e) => setGasLimit(e.target.value)}
+              style={input}
+            />
+
+            <button onClick={() => calculateFee()} style={mainBtn}>
+              Calculate
+            </button>
+
+            <div style={{ marginTop: 10 }}>
+              <button onClick={() => calculateFee(10)} style={smallBtn}>Low</button>
+              <button onClick={() => calculateFee(20)} style={smallBtn}>Medium</button>
+              <button onClick={() => calculateFee(30)} style={smallBtn}>High</button>
             </div>
-          ))}
-        </div>
-      )}
 
-      {tab === "news" && (
-        <div>
-          {news.map((n, i) => (
-            <div key={i}>
-              <a href={n.url} target="_blank">
-                {n.title}
-              </a>
-            </div>
-          ))}
-        </div>
-      )}
+            <p style={{ marginTop: 10 }}>{result}</p>
+            <p style={{ opacity: 0.7 }}>ETH Price: ${ethPrice}</p>
+          </>
+        )}
 
+        {/* PRICES */}
+        {tab === "prices" && (
+          <>
+            <h2 style={sectionTitle}>Top 50 Crypto Prices</h2>
+            {coins.map((c) => (
+              <div key={c.id} style={listItem}>
+                {c.name} — ${c.current_price}
+              </div>
+            ))}
+          </>
+        )}
+
+        {/* NEWS */}
+        {tab === "news" && (
+          <>
+            <h2 style={sectionTitle}>Crypto News</h2>
+            {news.map((n, i) => (
+              <div key={i} style={listItem}>
+                <a href={n.url} target="_blank" style={{ color: "#38bdf8" }}>
+                  {n.title}
+                </a>
+              </div>
+            ))}
+          </>
+        )}
+
+      </div>
     </div>
   );
 }
+
+/* 🎨 STYLES */
+
+const container = {
+  padding: 20,
+  background: "#0f172a",
+  color: "white",
+  minHeight: "100vh",
+  fontFamily: "Arial"
+};
+
+const header = {
+  display: "flex",
+  alignItems: "center",
+  gap: 10,
+  marginBottom: 20
+};
+
+const title = {
+  fontSize: "22px",
+  fontWeight: "bold"
+};
+
+const tabs = {
+  marginBottom: 20
+};
+
+const tabBtn = {
+  marginRight: 10,
+  padding: "8px 12px",
+  borderRadius: 8,
+  background: "#1e293b",
+  color: "white",
+  border: "1px solid #334155"
+};
+
+const activeTab = {
+  ...tabBtn,
+  background: "#2563eb"
+};
+
+const card = {
+  background: "#1e293b",
+  padding: 15,
+  borderRadius: 12
+};
+
+const sectionTitle = {
+  marginBottom: 10
+};
+
+const input = {
+  display: "block",
+  marginBottom: 10,
+  padding: 10,
+  width: "100%",
+  borderRadius: 6
+};
+
+const mainBtn = {
+  padding: 10,
+  borderRadius: 6,
+  cursor: "pointer"
+};
+
+const smallBtn = {
+  marginRight: 5,
+  padding: 6,
+  borderRadius: 6,
+  cursor: "pointer"
+};
+
+const listItem = {
+  padding: 8,
+  borderBottom: "1px solid #334155"
+};
