@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -23,7 +25,7 @@ export default function Home() {
   const [gasLimit, setGasLimit] = useState("");
   const [result, setResult] = useState("");
 
-  // ✅ FETCH PRICES (every 2 sec)
+  // ✅ FETCH PRICES
   const fetchPrices = async () => {
     try {
       const res = await fetch(
@@ -32,12 +34,12 @@ export default function Home() {
       );
       const data = await res.json();
       setCoins(data);
-    } catch (err) {
+    } catch {
       console.log("price error");
     }
   };
 
-  // ✅ FETCH NEWS (safe fallback)
+  // ✅ FETCH NEWS
   const fetchNews = async () => {
     try {
       const res = await fetch(
@@ -45,14 +47,14 @@ export default function Home() {
       );
       const data = await res.json();
 
-      const formatted: NewsItem[] =
-        data?.Data?.slice(0, 10).map((item: { title: string; url: string }) => ({
+      const formatted =
+        data?.Data?.slice(0, 10).map((item: any) => ({
           title: item.title,
           url: item.url,
         })) || [];
 
       setNews(formatted);
-    } catch (err) {
+    } catch {
       setNews([
         { title: "Crypto market showing recovery", url: "#" },
         { title: "Base ecosystem growing fast", url: "#" },
@@ -62,7 +64,7 @@ export default function Home() {
     }
   };
 
-  // ✅ AUTO REFRESH
+  // ✅ AUTO REFRESH (2 sec)
   useEffect(() => {
     fetchPrices();
     fetchNews();
@@ -71,7 +73,7 @@ export default function Home() {
     return () => clearInterval(interval);
   }, []);
 
-  // ✅ GAS CALCULATION
+  // ✅ GAS CALCULATOR
   const calculateGas = () => {
     const p = parseFloat(gasPrice);
     const l = parseFloat(gasLimit);
@@ -95,9 +97,15 @@ export default function Home() {
 
       {/* TABS */}
       <div style={styles.tabs}>
-        <button onClick={() => setTab("prices")} style={tab === "prices" ? styles.activeTab : styles.tab}>Prices</button>
-        <button onClick={() => setTab("gas")} style={tab === "gas" ? styles.activeTab : styles.tab}>Gas</button>
-        <button onClick={() => setTab("news")} style={tab === "news" ? styles.activeTab : styles.tab}>News</button>
+        <button onClick={() => setTab("prices")} style={tab === "prices" ? styles.activeTab : styles.tab}>
+          Prices
+        </button>
+        <button onClick={() => setTab("gas")} style={tab === "gas" ? styles.activeTab : styles.tab}>
+          Gas
+        </button>
+        <button onClick={() => setTab("news")} style={tab === "news" ? styles.activeTab : styles.tab}>
+          News
+        </button>
       </div>
 
       {/* PRICES */}
@@ -117,9 +125,25 @@ export default function Home() {
       {tab === "gas" && (
         <div style={styles.card}>
           <h3>Gas Estimator</h3>
-          <input placeholder="Gas Price" onChange={(e) => setGasPrice(e.target.value)} style={styles.input} />
-          <input placeholder="Gas Limit" onChange={(e) => setGasLimit(e.target.value)} style={styles.input} />
-          <button onClick={calculateGas} style={styles.button}>Calculate</button>
+
+          <input
+            placeholder="Gas Price (gwei)"
+            value={gasPrice}
+            onChange={(e) => setGasPrice(e.target.value)}
+            style={styles.input}
+          />
+
+          <input
+            placeholder="Gas Limit"
+            value={gasLimit}
+            onChange={(e) => setGasLimit(e.target.value)}
+            style={styles.input}
+          />
+
+          <button onClick={calculateGas} style={styles.button}>
+            Calculate
+          </button>
+
           <p>{result}</p>
         </div>
       )}
@@ -163,6 +187,7 @@ const styles: any = {
   logo: {
     width: 32,
     height: 32,
+    objectFit: "contain",
   },
   tabs: {
     display: "flex",
