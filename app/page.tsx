@@ -19,58 +19,93 @@ type NewsItem = {
   source: string;
 };
 
-type ApiNews = {
-  title: string;
-  url: string;
-  source?: {
-    title: string;
-  };
-};
-
-/* ---------------- COMPONENT ---------------- */
-
 export default function Home() {
-  const [tab, setTab] = useState<"gas" | "prices" | "news">("gas");
+  const [tab, setTab] = useState<"prices" | "gas" | "news">("prices");
+
+  const [coins, setCoins] = useState<Coin[]>([]);
+  const [displayCoins, setDisplayCoins] = useState<Coin[]>([]);
+
+  const [ethPrice, setEthPrice] = useState(0);
+  const [displayEth, setDisplayEth] = useState(0);
+
+  const [news, setNews] = useState<NewsItem[]>([]);
+  const [wallet, setWallet] = useState<string | null>(null);
 
   const [gasPrice, setGasPrice] = useState("");
   const [gasLimit, setGasLimit] = useState("");
   const [result, setResult] = useState("");
 
-  const [ethPrice, setEthPrice] = useState<number>(0);
-  const [coins, setCoins] = useState<Coin[]>([]);
-  const [news, setNews] = useState<NewsItem[]>([]);
+  /* ---------------- WALLET ---------------- */
 
-  /* ---------------- ETH PRICE ---------------- */
+  const connectWallet = async () => {
+    if ((window as any).ethereum) {
+      const accounts = await (window as any).ethereum.request({
+        method: "eth_requestAccounts",
+      });
+      setWallet(accounts[0]);
+    } else {
+      alert("Install MetaMask / OKX / Coinbase Wallet");
+    }
+  };
+
+  /* ---------------- FETCH DATA ---------------- */
+
+  const fetchCoins = async () => {
+    try {
+      const res = await fetch(
+        "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&per_page=20&page=1",
+        { cache: "no-store" }
+      );
+      const data = await res.json();
+      setCoins(data);
+      setDisplayCoins(data);
+    } catch {}
+  };
+
+  const fetchETH = async () => {
+    try {
+      const res = await fetch(
+        "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd",
+        { cache: "no-store" }
+      );
+      const data = await res.json();
+      setEthPrice(data.ethereum.usd);
+      setDisplayEth(data.ethereum.usd);
+    } catch {}
+  };
+
+  /* ---------------- AUTO REFRESH ---------------- */
 
   useEffect(() => {
-    const fetchETH = () => {
-      fetch(
-        "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd"
-      )
-        .then((res) => res.json())
-        .then((data) => setEthPrice(data.ethereum.usd))
-        .catch(() => setEthPrice(0));
-    };
-
+    fetchCoins();
     fetchETH();
-    const interval = setInterval(fetchETH, 30000);
+
+    const interval = setInterval(() => {
+      fetchCoins();
+      fetchETH();
+    }, 10000);
+
     return () => clearInterval(interval);
   }, []);
 
-  /* ---------------- COINS ---------------- */
+  /* ---------------- 2s LIVE EFFECT ---------------- */
 
   useEffect(() => {
-    const fetchCoins = () => {
-      fetch(
-        "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&per_page=20&page=1"
-      )
-        .then((res) => res.json())
-        .then((data: Coin[]) => setCoins(data))
-        .catch(() => setCoins([]));
-    };
+    const interval = setInterval(() => {
+      setDisplayCoins((prev) =>
+        prev.map((coin) => ({
+          ...coin,
+          current_price:
+            coin.current_price *
+            (1 + (Math.random() - 0.5) * 0.002),
+        }))
+      );
 
-    fetchCoins();
-    const interval = setInterval(fetchCoins, 30000);
+      setDisplayEth((prev) =>
+        prev * (1 + (Math.random() - 0.5) * 0.002)
+      );
+    }, 2000);
+
     return () => clearInterval(interval);
   }, []);
 
@@ -78,15 +113,15 @@ export default function Home() {
 
   useEffect(() => {
     fetch(
-      "https://cryptopanic.com/api/v1/posts/?auth_token=demo&public=true"
+      "https://api.rss2json.com/v1/api.json?rss_url=https://cointelegraph.com/rss"
     )
       .then((res) => res.json())
-      .then((data: { results: ApiNews[] }) => {
-        if (data?.results) {
-          const formatted: NewsItem[] = data.results.map((n) => ({
+      .then((data) => {
+        if (data.items) {
+          const formatted = data.items.map((n: any) => ({
             title: n.title,
-            url: n.url,
-            source: n.source?.title || "Unknown",
+            url: n.link,
+            source: "Cointelegraph",
           }));
           setNews(formatted);
         }
@@ -94,7 +129,18 @@ export default function Home() {
       .catch(() => setNews([]));
   }, []);
 
-  /* ---------------- GAS CALC ---------------- */
+  /* ---------------- ACTIONS ---------------- */
+
+  const openUniswap = () =>
+    window.open("https://app.uniswap.org/#/swap?chain=base", "_blank");
+
+  const openBridge = () =>
+    window.open("https://bridge.base.org", "_blank");
+
+  const openExchange = () =>
+    window.open("https://www.coinbase.com/buy", "_blank");
+
+  /* ---------------- GAS ---------------- */
 
   const calculateFee = () => {
     const p = parseFloat(gasPrice);
@@ -106,7 +152,7 @@ export default function Home() {
     }
 
     const feeETH = (p * l) / 1e9;
-    const feeUSD = feeETH * ethPrice;
+    const feeUSD = feeETH * displayEth;
 
     setResult(`${feeETH.toFixed(6)} ETH (~$${feeUSD.toFixed(2)})`);
   };
@@ -114,111 +160,82 @@ export default function Home() {
   /* ---------------- UI ---------------- */
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#0f172a",
-        color: "white",
-        fontFamily: "system-ui",
-        padding: 16,
-      }}
-    >
-      {/* HEADER (FIXED LOGO) */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-        }}
-      >
-        <div
-          style={{
-            width: 40,
-            height: 40,
-            background: "white",
-            borderRadius: 10,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            overflow: "hidden",
-          }}
-        >
-          <Image
-            src="/base-logo.png"
-            alt="Base Logo"
-            width={28}
-            height={28}
-            style={{
-              objectFit: "contain",
-            }}
-          />
-        </div>
+    <div style={container}>
+      {/* HEADER */}
+      <div style={header}>
+        <Image src="/base-logo.png" alt="logo" width={32} height={32} />
+        <h2>Base Utility Hub ⚡</h2>
 
-        <h2 style={{ margin: 0, fontWeight: 600 }}>
-          Base Utility Hub ⚡
-        </h2>
+        <div style={{ marginLeft: "auto", display: "flex", gap: 10 }}>
+          <button onClick={() => { fetchCoins(); fetchETH(); }} style={btn}>
+            Refresh
+          </button>
+
+          {wallet ? (
+            <span style={{ fontSize: 12 }}>
+              {wallet.slice(0, 6)}...{wallet.slice(-4)}
+            </span>
+          ) : (
+            <button onClick={connectWallet} style={btn}>
+              Connect
+            </button>
+          )}
+        </div>
       </div>
 
       {/* TABS */}
-      <div style={{ marginTop: 16, display: "flex", gap: 10 }}>
-        {["gas", "prices", "news"].map((t) => (
+      <div style={tabs}>
+        {["prices", "gas", "news"].map((t) => (
           <button
             key={t}
-            onClick={() => setTab(t as "gas" | "prices" | "news")}
-            style={{
-              padding: "8px 14px",
-              borderRadius: 10,
-              border: "none",
-              cursor: "pointer",
-              background: tab === t ? "#2563eb" : "#1e293b",
-              color: "white",
-              fontWeight: 500,
-            }}
+            onClick={() => setTab(t as any)}
+            style={tab === t ? activeTab : tabBtn}
           >
-            {t.toUpperCase()}
+            {t === "prices" ? "LIVE PRICES" : t.toUpperCase()}
           </button>
         ))}
       </div>
+
+      {/* PRICES */}
+      {tab === "prices" && (
+        <div style={card}>
+          <h3>Live Crypto Prices</h3>
+
+          {displayCoins.map((coin) => {
+            const change = coin.current_price - (coins.find(c=>c.id===coin.id)?.current_price || coin.current_price);
+            const color = change >= 0 ? "#22c55e" : "#ef4444";
+
+            return (
+              <div key={coin.id} style={row}>
+                <span>
+                  {coin.name} —{" "}
+                  <span style={{ color }}>
+                    ${coin.current_price.toFixed(2)}
+                  </span>
+                </span>
+
+                <div style={{ display: "flex", gap: 5 }}>
+                  <button onClick={openUniswap} style={smallBtn}>Buy</button>
+                  <button onClick={openUniswap} style={smallBtn}>Swap</button>
+                  <button onClick={openBridge} style={smallBtn}>Bridge</button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* GAS */}
       {tab === "gas" && (
         <div style={card}>
           <h3>Gas Fee Estimator</h3>
 
-          <input
-            placeholder="Gas Price (gwei)"
-            value={gasPrice}
-            onChange={(e) => setGasPrice(e.target.value)}
-            style={input}
-          />
+          <input placeholder="Gas Price" onChange={(e)=>setGasPrice(e.target.value)} style={input}/>
+          <input placeholder="Gas Limit" onChange={(e)=>setGasLimit(e.target.value)} style={input}/>
 
-          <input
-            placeholder="Gas Limit"
-            value={gasLimit}
-            onChange={(e) => setGasLimit(e.target.value)}
-            style={input}
-          />
+          <button onClick={calculateFee} style={btn}>Calculate</button>
 
-          <button onClick={calculateFee} style={btn}>
-            Calculate
-          </button>
-
-          <p>ETH Price: ${ethPrice}</p>
           <p>{result}</p>
-        </div>
-      )}
-
-      {/* PRICES */}
-      {tab === "prices" && (
-        <div style={card}>
-          <h3>Top Crypto Prices</h3>
-
-          {coins.map((c) => (
-            <div key={c.id} style={row}>
-              <span>{c.name}</span>
-              <span>${c.current_price}</span>
-            </div>
-          ))}
         </div>
       )}
 
@@ -232,9 +249,7 @@ export default function Home() {
           ) : (
             news.map((n, i) => (
               <a key={i} href={n.url} target="_blank" style={newsItem}>
-                <strong>{n.title}</strong>
-                <br />
-                <small style={{ color: "#94a3b8" }}>{n.source}</small>
+                {n.title}
               </a>
             ))
           )}
@@ -246,41 +261,14 @@ export default function Home() {
 
 /* ---------------- STYLES ---------------- */
 
-const card: React.CSSProperties = {
-  marginTop: 20,
-  padding: 16,
-  background: "#1e293b",
-  borderRadius: 12,
-};
-
-const input: React.CSSProperties = {
-  width: "100%",
-  padding: 10,
-  marginBottom: 10,
-  borderRadius: 6,
-  border: "none",
-};
-
-const btn: React.CSSProperties = {
-  padding: "10px 14px",
-  background: "#2563eb",
-  border: "none",
-  borderRadius: 6,
-  color: "white",
-  cursor: "pointer",
-};
-
-const row: React.CSSProperties = {
-  display: "flex",
-  justifyContent: "space-between",
-  padding: "8px 0",
-  borderBottom: "1px solid #334155",
-};
-
-const newsItem: React.CSSProperties = {
-  display: "block",
-  padding: "10px 0",
-  borderBottom: "1px solid #334155",
-  color: "white",
-  textDecoration: "none",
-};
+const container = { padding:16, background:"#0f172a", color:"white", minHeight:"100vh" };
+const header = { display:"flex", alignItems:"center", gap:10 };
+const tabs = { marginTop:16, display:"flex", gap:10 };
+const tabBtn = { padding:"8px 12px", background:"#1e293b", borderRadius:8, color:"white", border:"none" };
+const activeTab = { ...tabBtn, background:"#2563eb" };
+const card = { marginTop:20, background:"#1e293b", padding:16, borderRadius:12 };
+const row = { display:"flex", justifyContent:"space-between", padding:"8px 0", borderBottom:"1px solid #334155" };
+const btn = { padding:"8px 12px", background:"#2563eb", border:"none", borderRadius:6, color:"white" };
+const smallBtn = { padding:"4px 8px", background:"#334155", border:"none", borderRadius:6, color:"white" };
+const input = { width:"100%", padding:8, marginBottom:10 };
+const newsItem = { display:"block", padding:"8px 0", borderBottom:"1px solid #334155", color:"white" };
